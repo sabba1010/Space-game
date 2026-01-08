@@ -12,6 +12,20 @@ const mobileControls = document.getElementById("mobile-controls");
 // Detect if mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+// Load DVD image for bouncing logo
+const dvdImage = new Image();
+dvdImage.src = "Images/dvd.png";
+dvdImage.onload = () => {
+  // Image loaded, ready to draw
+};
+
+// Load enemy sprite image
+const enemyImage = new Image();
+enemyImage.src = "Images/enimy.png";
+enemyImage.onload = () => {
+  // Image loaded, ready to draw enemies
+};
+
 // Fullscreen logo canvas setup
 function resizeLogoCanvas() {
   logoCanvas.width = window.innerWidth;
@@ -20,50 +34,21 @@ function resizeLogoCanvas() {
 resizeLogoCanvas();
 window.addEventListener("resize", resizeLogoCanvas);
 
-// Bouncing logo animation (increased size)
+// Bouncing logo animation (DVD image)
 const logo = {
-  x: logoCanvas.width / 2 - 70,
-  y: logoCanvas.height / 2 - 70,
+  x: logoCanvas.width / 2 - 100,
+  y: logoCanvas.height / 2 - 100,
   vx: 4,
   vy: 4,
-  width: 140,
-  height: 140
+  width: 200,
+  height: 200
 };
 
 function drawPixelatedLogo(x, y, size) {
-  const pixelSize = size / 4;
-  const colors = ["#124e78", "#f0f0c9", "#f2bb05", "#d74e09"];
-  
-  // E
-  logoCtx.fillStyle = colors[0];
-  logoCtx.fillRect(x, y, pixelSize * 3, pixelSize);
-  logoCtx.fillRect(x, y + pixelSize, pixelSize, pixelSize);
-  logoCtx.fillRect(x, y + pixelSize * 2, pixelSize * 2, pixelSize);
-  logoCtx.fillRect(x, y + pixelSize * 3, pixelSize * 3, pixelSize);
-  
-  // N
-  logoCtx.fillStyle = colors[1];
-  let nX = x + pixelSize * 4;
-  logoCtx.fillRect(nX, y, pixelSize, pixelSize * 4);
-  logoCtx.fillRect(nX + pixelSize, y + pixelSize, pixelSize, pixelSize);
-  logoCtx.fillRect(nX + pixelSize * 2, y + pixelSize * 2, pixelSize, pixelSize);
-  logoCtx.fillRect(nX + pixelSize * 3, y, pixelSize, pixelSize * 4);
-  
-  // V
-  logoCtx.fillStyle = colors[2];
-  let vX = x + pixelSize * 8;
-  logoCtx.fillRect(vX, y, pixelSize, pixelSize * 3);
-  logoCtx.fillRect(vX + pixelSize, y + pixelSize * 3, pixelSize, pixelSize);
-  logoCtx.fillRect(vX + pixelSize * 2, y + pixelSize * 3, pixelSize, pixelSize);
-  logoCtx.fillRect(vX + pixelSize * 3, y, pixelSize, pixelSize * 3);
-  
-  // O
-  logoCtx.fillStyle = colors[3];
-  let oX = x + pixelSize * 12;
-  logoCtx.fillRect(oX, y, pixelSize * 3, pixelSize);
-  logoCtx.fillRect(oX, y + pixelSize * 3, pixelSize * 3, pixelSize);
-  logoCtx.fillRect(oX, y + pixelSize, pixelSize, pixelSize * 2);
-  logoCtx.fillRect(oX + pixelSize * 2, y + pixelSize, pixelSize, pixelSize * 2);
+  // Draw the DVD image instead of pixelated logo
+  if (dvdImage.complete && dvdImage.naturalWidth > 0) {
+    logoCtx.drawImage(dvdImage, x, y, size, size);
+  }
 }
 
 function animateBouncingLogo() {
@@ -315,7 +300,10 @@ function drawPlayer() {
 // Draw enemy
 function drawEnemy(enemy) {
   if (enemy.isAlive && !enemy.isDead) {
-    if (enemy.isUFO) {
+    // Draw enemy sprite if loaded
+    if (enemyImage.complete && enemyImage.naturalWidth > 0) {
+      gameCtx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+    } else if (enemy.isUFO) {
       drawAnimeUFO(enemy);
     } else {
       gameCtx.fillStyle = enemy.color;
@@ -692,10 +680,9 @@ function gameLoop() {
   drawLasers();
   
   for (let block of defensiveBlocks) {
-    const alpha = Math.max(0.25, 1 - (4 - block.health) * 0.18);
-    gameCtx.globalAlpha = alpha;
-    drawLetterBlock(block.x, block.y, block.width, block.height, block.letter, block.color);
+    // Keep blocks at full opacity regardless of damage
     gameCtx.globalAlpha = 1;
+    drawLetterBlock(block.x, block.y, block.width, block.height, block.letter, block.color);
   }
   
   if (gameState.isOver) {
