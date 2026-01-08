@@ -83,6 +83,22 @@ const gameCtx = gameCanvas.getContext("2d");
 const livesDisplay = document.getElementById("lives-display");
 const scoreDisplay = document.getElementById("score-display");
 
+// Fullscreen canvas setup
+function resizeGameCanvas() {
+  gameCanvas.width = window.innerWidth;
+  gameCanvas.height = window.innerHeight;
+}
+resizeGameCanvas();
+window.addEventListener("resize", resizeGameCanvas);
+
+// Mouse position tracking
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight - 100;
+document.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
 // Color palette
 const colorArray = ["#124e78", "#f0f0c9", "#f2bb05", "#d74e09", "#6e0e0a"];
 
@@ -106,8 +122,8 @@ const FIRE_RATE_MS = 160; // milliseconds between auto-shots
 
 // Player (slightly larger)
 const player = {
-  x: gameCanvas.width / 2 - 20,
-  y: gameCanvas.height - 70,
+  x: 0,
+  y: 0,
   width: 40,
   height: 50,
   dx: 6,
@@ -377,6 +393,10 @@ function drawLasers() {
 
 // Update player position
 function updatePlayer(keys) {
+  // Mouse control - player follows cursor horizontally
+  player.x = Math.max(0, Math.min(mouseX - player.width / 2, gameCanvas.width - player.width));
+  
+  // Optional: keyboard fallback
   if (keys["ArrowLeft"] || keys["a"]) {
     player.x = Math.max(0, player.x - player.dx);
   }
@@ -619,6 +639,10 @@ playBtn.addEventListener("click", () => {
   landingPage.classList.add("hidden");
   gamePage.classList.remove("hidden");
   
+  // Initialize player position
+  player.x = gameCanvas.width / 2 - 20;
+  player.y = gameCanvas.height - 70;
+  
   gameState.isRunning = true;
   gameState.isOver = false;
   gameState.isWon = false;
@@ -664,6 +688,11 @@ if (sceneBtn) {
   sceneBtn.addEventListener('click', () => {
     landingPage.classList.add('hidden');
     gamePage.classList.remove('hidden');
+    
+    // Initialize player position
+    player.x = gameCanvas.width / 2 - 20;
+    player.y = gameCanvas.height - 70;
+    
     gameState.isRunning = true;
     gameState.isOver = false;
     gameState.isWon = false;
@@ -678,6 +707,10 @@ if (sceneBtn) {
 restartBtn.addEventListener("click", () => {
   winScreen.classList.add("hidden");
   gamePage.classList.remove("hidden");
+  
+  // Initialize player position
+  player.x = gameCanvas.width / 2 - 20;
+  player.y = gameCanvas.height - 70;
   
   gameState.isRunning = true;
   gameState.isOver = false;
