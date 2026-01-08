@@ -136,7 +136,7 @@ let gameState = {
 let spaceHeld = false;
 let lastShotTime = 0;
 // Player auto-fire rate (lower = faster firing)
-const FIRE_RATE_MS = 160; // milliseconds between auto-shots (slower, realistic gun fire)
+const FIRE_RATE_MS = 280; // milliseconds between auto-shots (much slower)
 
 // Player (slightly larger)
 const player = {
@@ -476,10 +476,14 @@ function playerShoot() {
       }
     }
 
+    // Reduced accuracy: very weak aim-assist and random spread
     if (best && bestDist < 160) {
-      // small horizontal velocity toward target; keeps shots mostly straight but more accurate
-      assistVx = best.dx * 0.04; // tuned factor
+      assistVx = best.dx * 0.01; // much weaker correction
     }
+    
+    // Add significant random inaccuracy to shots
+    const randomSpread = (Math.random() - 0.5) * 8;
+    assistVx += randomSpread;
 
     player.lasers.push({
       x: sx,
