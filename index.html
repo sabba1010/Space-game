@@ -2,6 +2,9 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>ENVO - Space Invaders</title>
     <link href="https://fonts.googleapis.com/css?family=Audiowide|Press+Start+2P" rel="stylesheet">
     <link rel="stylesheet" href="Styles/main.css">
@@ -10,10 +13,12 @@
   <body>
     <!-- Landing Page -->
     <div id="landing-page" class="landing-page">
-      <canvas id="logo-canvas" width="800" height="600"></canvas>
-      <div style="display:flex;gap:16px;">
-        <button id="play-btn" class="play-button">PLAY GAME</button>
-        <button id="scene-btn" class="scene-button">VIEW SCENE</button>
+      <div class="landing-content">
+        <canvas id="logo-canvas" width="800" height="600"></canvas>
+        <div class="button-group">
+          <button id="play-btn" class="play-button">PLAY GAME</button>
+          <button id="scene-btn" class="scene-button">VIEW SCENE</button>
+        </div>
       </div>
     </div>
 
@@ -22,8 +27,12 @@
       <div id="game-info">
         <div id="lives-display">LIVES: 3</div>
         <div id="score-display">SCORE: 0</div>
+        <button id="fullscreen-btn" class="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
       </div>
       <canvas id="game-canvas"></canvas>
+      <div id="mobile-controls" class="mobile-controls hidden">
+        <div id="touch-area"></div>
+      </div>
     </div>
 
     <!-- Win Screen -->
