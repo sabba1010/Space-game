@@ -6,6 +6,11 @@ const landingPage = document.getElementById("landing-page");
 const gamePage = document.getElementById("game-page");
 const winScreen = document.getElementById("win-screen");
 const restartBtn = document.getElementById("restart-btn");
+const fullscreenBtn = document.getElementById("fullscreen-btn");
+const mobileControls = document.getElementById("mobile-controls");
+
+// Detect if mobile
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // Bouncing logo animation (increased size)
 const logo = {
@@ -97,6 +102,25 @@ let mouseY = window.innerHeight - 100;
 document.addEventListener("mousemove", (e) => {
   mouseX = e.clientX;
   mouseY = e.clientY;
+});
+
+// Touch controls for mobile
+document.addEventListener("touchmove", (e) => {
+  if (gameState.isRunning && !gameState.isOver && !gameState.isWon) {
+    const touch = e.touches[0];
+    mouseX = touch.clientX;
+    mouseY = touch.clientY;
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// Fullscreen handler
+fullscreenBtn.addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
 });
 
 // Color palette
@@ -630,6 +654,16 @@ document.addEventListener("keyup", (e) => {
 // Mouse click to shoot
 document.addEventListener("click", () => {
   if (gameState.isRunning && !gameState.isOver && !gameState.isWon) {
+    playerShoot();
+  }
+});
+
+// Touch to shoot for mobile
+document.addEventListener("touchstart", (e) => {
+  if (gameState.isRunning && !gameState.isOver && !gameState.isWon && isMobile) {
+    const touch = e.touches[0];
+    mouseX = touch.clientX;
+    mouseY = touch.clientY;
     playerShoot();
   }
 });
