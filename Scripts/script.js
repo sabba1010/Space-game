@@ -142,7 +142,8 @@ let gameState = {
 // Auto-fire controls
 let spaceHeld = false;
 let lastShotTime = 0;
-const FIRE_RATE_MS = 160; // milliseconds between auto-shots
+// Player auto-fire rate (lower = faster firing)
+const FIRE_RATE_MS = 160; // milliseconds between auto-shots (kept for player balance)
 
 // Player (slightly larger)
 const player = {
@@ -154,7 +155,7 @@ const player = {
   color: "#f0f0c9",
   lasers: [],
   bulletSpeed: 12,
-  maxLasers: 2
+  maxLasers: 1
 };
 
 // Enemies array
@@ -231,7 +232,8 @@ function createENVOFormation() {
             letter: null,
             isAlive: true,
             lasers: [],
-            shotChance: 0.0008,
+            // base shot chance (higher -> more often they fire)
+            shotChance: 0.004,
             isDead: false,
             deadTime: 0
           });
@@ -510,7 +512,11 @@ function updateLasers() {
 }
 
 // Global enemy speed variable
-let enemy_vx = 1.5;
+// Enemy base horizontal speed (higher -> faster movement)
+let enemy_vx = 2.2; // increased for harder gameplay
+
+// Difficulty scaling factor (increases slightly each direction flip)
+const ENEMY_SPEED_SCALE = 1.06;
 
 // Update enemies
 function updateEnemies() {
@@ -526,12 +532,13 @@ function updateEnemies() {
     }
   }
   
-  if (rightBound >= gameCanvas.width || leftBound <= 0) {
-    enemy_vx *= -1;
+    if (rightBound >= gameCanvas.width || leftBound <= 0) {
+    // Reverse direction and slightly increase speed to ramp difficulty
+    enemy_vx = -enemy_vx * ENEMY_SPEED_SCALE;
     for (let enemy of enemies) {
       if (enemy.isAlive) {
-        enemy.vx *= -1;
-        enemy.y += 15;
+        enemy.vx = -enemy.vx * ENEMY_SPEED_SCALE;
+        enemy.y += 18; // drop a bit more each pass
       }
     }
   }
@@ -544,14 +551,19 @@ function updateEnemies() {
   }
   
   for (let enemy of enemies) {
-    if (enemy.isAlive && Math.random() < enemy.shotChance) {
-      enemy.lasers.push({
-        x: enemy.x + enemy.width / 2,
-        y: enemy.y + enemy.height,
-        vy: 3,
-        width: 3,
-        height: 10
-      });
+    if (enemy.isAlive) {
+      // increase firing probability as fewer enemies remain
+      const aliveFactor = 1 + (gameState.enemiesDefeated / Math.max(1, gameState.totalEnemies)) * 3;
+      const chance = enemy.shotChance * aliveFactor;
+      if (Math.random() < chance) {
+        enemy.lasers.push({
+          x: enemy.x + enemy.width / 2,
+          y: enemy.y + enemy.height,
+          vy: 4, // faster enemy bullets
+          width: 3,
+          height: 10
+        });
+      }
     }
     
     if (enemy.isDead) {
