@@ -12,6 +12,14 @@ const mobileControls = document.getElementById("mobile-controls");
 // Detect if mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+// Fullscreen logo canvas setup
+function resizeLogoCanvas() {
+  logoCanvas.width = window.innerWidth;
+  logoCanvas.height = window.innerHeight;
+}
+resizeLogoCanvas();
+window.addEventListener("resize", resizeLogoCanvas);
+
 // Bouncing logo animation (increased size)
 const logo = {
   x: logoCanvas.width / 2 - 70,
@@ -143,7 +151,7 @@ let gameState = {
 let spaceHeld = false;
 let lastShotTime = 0;
 // Player auto-fire rate (lower = faster firing)
-const FIRE_RATE_MS = 160; // milliseconds between auto-shots (kept for player balance)
+const FIRE_RATE_MS = 160; // milliseconds between auto-shots (slower, realistic gun fire)
 
 // Player (slightly larger)
 const player = {
@@ -154,8 +162,8 @@ const player = {
   dx: 6,
   color: "#f0f0c9",
   lasers: [],
-  bulletSpeed: 12,
-  maxLasers: 1
+  bulletSpeed: 42,
+  maxLasers: 4
 };
 
 // Enemies array
@@ -199,21 +207,28 @@ function createENVOFormation() {
     { name: "O", color: "#d74e09" }
   ];
 
-  const cellSize = 26; // enemy square size
-  const spacing = 6; // gap between cells
-  const startY = 60;
+  const cellSize = 42; // enemy square size (much larger for visibility)
+  const spacing = 24; // increased gap between enemy pixels for more space
+  // start lower on screen so enemies come from mid-area
+  const startY = 140;
   let enemyId = 0;
+  // Position letters evenly across the canvas (calculate per-letter width)
+  const letterWidths = letterOrder.map(lo => {
+    const p = patterns[lo.name];
+    const cols = p[0].length;
+    return cols * cellSize + (cols - 1) * spacing;
+  });
 
-  // Position letters evenly across the canvas
-  const totalLetterWidth = (5 * (cellSize + spacing)) * letterOrder.length + (spacing * (letterOrder.length - 1));
+  const totalLetterWidth = letterWidths.reduce((a, b) => a + b, 0) + spacing * (letterOrder.length - 1);
   let baseX = Math.max(40, (gameCanvas.width - totalLetterWidth) / 2);
 
   for (let L = 0; L < letterOrder.length; L++) {
     const letter = letterOrder[L].name;
     const color = letterOrder[L].color;
     const pattern = patterns[letter];
+    const cols = pattern[0].length;
 
-    const letterOffsetX = baseX + L * (5 * (cellSize + spacing) + spacing);
+    const letterOffsetX = baseX + letterWidths.slice(0, L).reduce((a, b) => a + b, 0) + L * spacing;
 
     for (let row = 0; row < pattern.length; row++) {
       const rowStr = pattern[row];
@@ -228,6 +243,8 @@ function createENVOFormation() {
             width: cellSize,
             height: cellSize,
             vx: enemy_vx,
+            // render these formation enemies as small UFOs for style
+            isUFO: true,
             color: color,
             letter: null,
             isAlive: true,
@@ -248,15 +265,16 @@ function createENVOFormation() {
 // Create defensive blocks with letters E, N, V, O
 function createDefensiveBlocks() {
   defensiveBlocks = [];
-  const blockWidth = 100;
-  const blockHeight = 36;
+  const blockWidth = 220;
+  const blockHeight = 90;
   const gap = 40;
   const letters = ["E", "N", "V", "O"];
   const colors = ["#124e78", "#f0f0c9", "#f2bb05", "#d74e09"];
 
   const totalWidth = (blockWidth * letters.length) + (gap * (letters.length - 1));
   let startX = (gameCanvas.width - totalWidth) / 2;
-  const y = gameCanvas.height - 160;
+  // positioned slightly higher to accommodate larger blocks
+  const y = gameCanvas.height - 200;
 
   for (let i = 0; i < letters.length; i++) {
     defensiveBlocks.push({
@@ -266,7 +284,7 @@ function createDefensiveBlocks() {
       height: blockHeight,
       letter: letters[i],
       color: colors[i],
-      health: 3
+      health: 5
     });
   }
 }
@@ -280,7 +298,7 @@ function drawLetterBlock(x, y, width, height, letter, color) {
   gameCtx.strokeRect(x, y, width, height);
   
   gameCtx.fillStyle = "#000";
-  gameCtx.font = "bold 32px 'Press Start 2P'";
+  gameCtx.font = "bold 48px 'Press Start 2P'";
   gameCtx.textAlign = "center";
   gameCtx.textBaseline = "middle";
   gameCtx.fillText(letter, x + width / 2, y + height / 2);
@@ -318,74 +336,78 @@ function drawEnemy(enemy) {
   }
 }
 
-// Anime-like UFO drawing: soft pastel, big glossy dome, cute lights and sparkles
+// Realistic UFO drawing with metallic saucer and glowing effects
 function drawAnimeUFO(u) {
   const ctx = gameCtx;
   ctx.save();
 
-  // soft glow
-  ctx.shadowColor = 'rgba(160,140,255,0.9)';
-  ctx.shadowBlur = Math.max(8, (u.width + u.height) * 0.08);
+  // strong outer glow for UFO atmosphere
+  ctx.shadowColor = 'rgba(100, 200, 255, 0.8)';
+  ctx.shadowBlur = Math.max(12, (u.width + u.height) * 0.15);
 
-  // saucer base (rounded capsule)
-  const bx = u.x;
-  const by = u.y + u.height * 0.2;
-  const bw = u.width;
-  const bh = u.height * 0.6;
-  const radius = bh * 0.5;
+  // metallic saucer base (ellipse shape)
+  const sx = u.x;
+  const sy = u.y + u.height * 0.35;
+  const sw = u.width * 0.95;
+  const sh = u.height * 0.45;
 
-  // base gradient - pastel
-  const g = ctx.createLinearGradient(bx, by, bx + bw, by + bh);
-  g.addColorStop(0, '#ffd7f0');
-  g.addColorStop(0.5, '#d6e6ff');
-  g.addColorStop(1, '#bcd8ff');
-  ctx.fillStyle = g;
-  roundRect(ctx, bx, by, bw, bh, radius);
+  // metallic gradient - silver/grey metallic look
+  const metalGrad = ctx.createLinearGradient(sx, sy, sx + sw, sy + sh);
+  metalGrad.addColorStop(0, '#e8e8e8');
+  metalGrad.addColorStop(0.3, '#b0b0b0');
+  metalGrad.addColorStop(0.5, '#808080');
+  metalGrad.addColorStop(0.7, '#b0b0b0');
+  metalGrad.addColorStop(1, '#e8e8e8');
+  ctx.fillStyle = metalGrad;
+  ctx.beginPath();
+  ctx.ellipse(sx + sw / 2, sy + sh / 2, sw / 2, sh / 2, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // rim shine
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  // rim highlight on saucer
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
   ctx.lineWidth = 2;
-  roundRect(ctx, bx + 3, by + 4, bw - 6, bh - 8, radius - 4);
+  ctx.beginPath();
+  ctx.ellipse(sx + sw / 2, sy + sh / 2 - 2, sw / 2 - 3, sh / 2 - 4, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // cute cockpit dome (big glossy orb)
+  // cockpit dome - large glass dome with cyan glow
   const cx = u.x + u.width * 0.5;
-  const cy = u.y + u.height * 0.4;
-  const crx = u.width * 0.26;
-  const cry = u.height * 0.24;
-  const domeGrad = ctx.createLinearGradient(cx - crx, cy - cry, cx + crx, cy + cry);
-  domeGrad.addColorStop(0, 'rgba(255,255,255,0.9)');
-  domeGrad.addColorStop(0.4, 'rgba(180,220,255,0.95)');
-  domeGrad.addColorStop(1, 'rgba(140,180,255,0.9)');
+  const cy = u.y + u.height * 0.25;
+  const drx = u.width * 0.32;
+  const dry = u.height * 0.28;
+
+  // dome inner gradient (cyan/blue)
+  const domeGrad = ctx.createRadialGradient(cx, cy - dry * 0.3, 0, cx, cy, drx);
+  domeGrad.addColorStop(0, 'rgba(100, 220, 255, 0.85)');
+  domeGrad.addColorStop(0.5, 'rgba(50, 180, 255, 0.7)');
+  domeGrad.addColorStop(1, 'rgba(20, 100, 200, 0.6)');
   ctx.fillStyle = domeGrad;
   ctx.beginPath();
-  ctx.ellipse(cx, cy, crx, cry, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, drx, dry, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // big anime eyes / lights
-  ctx.fillStyle = 'rgba(40,40,60,0.95)';
-  const eyeRX = crx * 0.28;
-  const eyeRY = cry * 0.38;
+  // dome outline
+  ctx.strokeStyle = 'rgba(200, 240, 255, 0.8)';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.ellipse(cx - crx * 0.35, cy + cry * 0.05, eyeRX, eyeRY, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, drx, dry, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // bottom landing lights (red/orange)
+  ctx.fillStyle = 'rgba(255, 100, 50, 0.9)';
+  ctx.beginPath();
+  ctx.arc(sx + sw * 0.25, sy + sh * 0.7, 3, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(cx + crx * 0.35, cy + cry * 0.05, eyeRX, eyeRY, 0, 0, Math.PI * 2);
+  ctx.arc(sx + sw * 0.75, sy + sh * 0.7, 3, 0, Math.PI * 2);
   ctx.fill();
 
-  // eye glints
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.beginPath(); ctx.arc(cx - crx * 0.42, cy - cry * 0.02, Math.max(2, eyeRX * 0.25), 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(cx + crx * 0.28, cy - cry * 0.06, Math.max(2, eyeRX * 0.22), 0, Math.PI * 2); ctx.fill();
-
-  // small sparkles around
-  ctx.fillStyle = 'rgba(255,220,255,0.9)';
-  for (let i = 0; i < 3; i++) {
-    const sx = u.x + Math.random() * u.width;
-    const sy = u.y + Math.random() * u.height * 0.6;
-    ctx.fillRect(sx, sy, 2, 2);
-  }
+  // pulsing glow effect around UFO
+  const pulseAlpha = 0.3 + 0.2 * Math.sin(Date.now() * 0.005);
+  ctx.fillStyle = `rgba(100, 200, 255, ${pulseAlpha})`;
+  ctx.beginPath();
+  ctx.ellipse(cx, sy + sh / 2, sw / 2 + 8, sh / 2 + 6, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.restore();
 }
@@ -404,25 +426,34 @@ function roundRect(ctx, x, y, w, h, r) {
 
 // Draw lasers
 function drawLasers() {
+  // Draw player lasers
   gameCtx.fillStyle = "#00ff00";
   for (let laser of player.lasers) {
-    gameCtx.fillRect(laser.x, laser.y, 3, 10);
+    const w = laser.width || 3;
+    const h = laser.height || 10;
+    gameCtx.fillRect(laser.x, laser.y, w, h);
   }
-  
-  gameCtx.fillStyle = "#ff0000";
+
+  // Draw enemy lasers
+  gameCtx.fillStyle = "#ff5555";
   for (let enemy of enemies) {
     for (let laser of enemy.lasers) {
-      gameCtx.fillRect(laser.x, laser.y, 3, 10);
+      const w = laser.width || 3;
+      const h = laser.height || 10;
+      gameCtx.fillRect(laser.x, laser.y, w, h);
     }
   }
 }
 
 // Update player position
 function updatePlayer(keys) {
-  // Mouse control - player follows cursor horizontally
-  player.x = Math.max(0, Math.min(mouseX - player.width / 2, gameCanvas.width - player.width));
-  
-  // Optional: keyboard fallback
+  // Mouse control - smooth follow for improved shot stability
+  const targetX = Math.max(0, Math.min(mouseX - player.width / 2, gameCanvas.width - player.width));
+  // interpolate towards target to reduce jitter (0 = no movement, 1 = instant)
+  const SMOOTH = 0.28;
+  player.x += (targetX - player.x) * SMOOTH;
+
+  // Optional: keyboard fallback (adds to smoothed position)
   if (keys["ArrowLeft"] || keys["a"]) {
     player.x = Math.max(0, player.x - player.dx);
   }
@@ -434,12 +465,41 @@ function updatePlayer(keys) {
 // Player shoot
 function playerShoot() {
   if (player.lasers.length < player.maxLasers) {
+    const lw = 4;
+    const lh = 12;
+    // Lock shot to a rounded center position for consistent accuracy
+    const sx = Math.round(player.x + player.width / 2 - lw / 2);
+    const sy = Math.round(player.y);
+
+    // slight aim-assist: nudge bullet horizontally toward nearest alive enemy
+    let assistVx = 0;
+    let best = null;
+    let bestDist = Infinity;
+    for (let e of enemies) {
+      if (!e.isAlive) continue;
+      // consider only enemies above the player
+      if (e.y + e.height >= player.y) continue;
+      const exCenter = e.x + e.width / 2;
+      const dx = exCenter - (sx + lw / 2);
+      const absdx = Math.abs(dx);
+      if (absdx < bestDist) {
+        bestDist = absdx;
+        best = { e, dx };
+      }
+    }
+
+    if (best && bestDist < 160) {
+      // small horizontal velocity toward target; keeps shots mostly straight but more accurate
+      assistVx = best.dx * 0.04; // tuned factor
+    }
+
     player.lasers.push({
-      x: player.x + player.width / 2 - 1.5,
-      y: player.y,
+      x: sx,
+      y: sy,
       vy: -player.bulletSpeed,
-      width: 3,
-      height: 10
+      vx: assistVx,
+      width: lw,
+      height: lh
     });
   }
 }
@@ -447,6 +507,8 @@ function playerShoot() {
 // Update lasers
 function updateLasers() {
   for (let i = player.lasers.length - 1; i >= 0; i--) {
+    // update x as well for any horizontal assist velocity
+    player.lasers[i].x += player.lasers[i].vx || 0;
     player.lasers[i].y += player.lasers[i].vy;
     
     for (let j = enemies.length - 1; j >= 0; j--) {
@@ -473,38 +535,44 @@ function updateLasers() {
     }
   }
   
-  for (let enemy of enemies) {
+      for (let enemy of enemies) {
     for (let i = enemy.lasers.length - 1; i >= 0; i--) {
-      enemy.lasers[i].y += enemy.lasers[i].vy;
-      
-      if (enemy.lasers[i].x < player.x + player.width &&
-          enemy.lasers[i].x + 3 > player.x &&
-          enemy.lasers[i].y < player.y + player.height &&
-          enemy.lasers[i].y + 10 > player.y) {
-        
+      const l = enemy.lasers[i];
+      // update both x and y for aimed shots
+      l.x += l.vx || 0;
+      l.y += l.vy || 0;
+
+      // collision with player
+      if (l.x < player.x + player.width &&
+          l.x + l.width > player.x &&
+          l.y < player.y + player.height &&
+          l.y + l.height > player.y) {
         gameState.lives--;
         livesDisplay.textContent = `LIVES: ${gameState.lives}`;
-        
+
         if (gameState.lives <= 0) {
           gameState.isOver = true;
         }
-        
+
         enemy.lasers.splice(i, 1);
+        continue;
       }
-      
+
+      // collision with defensive blocks
       for (let block of defensiveBlocks) {
-        if (enemy.lasers[i] &&
-            enemy.lasers[i].x < block.x + block.width &&
-            enemy.lasers[i].x + 3 > block.x &&
-            enemy.lasers[i].y < block.y + block.height &&
-            enemy.lasers[i].y + 10 > block.y) {
-          
+        if (l &&
+            l.x < block.x + block.width &&
+            l.x + l.width > block.x &&
+            l.y < block.y + block.height &&
+            l.y + l.height > block.y) {
           block.health--;
           enemy.lasers.splice(i, 1);
+          break;
         }
       }
-      
-      if (enemy.lasers[i] && enemy.lasers[i].y > gameCanvas.height) {
+
+      // remove if out of bounds
+      if (l && (l.y > gameCanvas.height + 50 || l.x < -50 || l.x > gameCanvas.width + 50)) {
         enemy.lasers.splice(i, 1);
       }
     }
@@ -556,12 +624,25 @@ function updateEnemies() {
       const aliveFactor = 1 + (gameState.enemiesDefeated / Math.max(1, gameState.totalEnemies)) * 3;
       const chance = enemy.shotChance * aliveFactor;
       if (Math.random() < chance) {
+        // Aim at player: compute normalized direction
+        const sx = enemy.x + enemy.width / 2;
+        const sy = enemy.y + enemy.height;
+        const tx = player.x + player.width / 2;
+        const ty = player.y + player.height / 2;
+        const dx = tx - sx;
+        const dy = ty - sy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const speed = 4.5; // enemy bullet speed
+        const vx = (dx / dist) * speed;
+        const vy = (dy / dist) * speed;
+
         enemy.lasers.push({
-          x: enemy.x + enemy.width / 2,
-          y: enemy.y + enemy.height,
-          vy: 4, // faster enemy bullets
-          width: 3,
-          height: 10
+          x: sx,
+          y: sy,
+          vx: vx,
+          vy: vy,
+          width: 4,
+          height: 12
         });
       }
     }
@@ -611,7 +692,7 @@ function gameLoop() {
   drawLasers();
   
   for (let block of defensiveBlocks) {
-    const alpha = Math.max(0.3, 1 - (3 - block.health) * 0.25);
+    const alpha = Math.max(0.25, 1 - (4 - block.health) * 0.18);
     gameCtx.globalAlpha = alpha;
     drawLetterBlock(block.x, block.y, block.width, block.height, block.letter, block.color);
     gameCtx.globalAlpha = 1;
