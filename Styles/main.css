@@ -1,0 +1,154 @@
+@font-face {
+  font-family: "PressStart2P";
+  src: url("../fonts/PressStart2P.ttf");
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  font-family: "PressStart2P", monospace;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Landing Page */
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.landing-page.hidden {
+  display: none;
+}
+
+#logo-canvas {
+  background: #000;
+  display: block;
+  border: 2px solid #fff;
+  margin-bottom: 40px;
+}
+
+.play-button {
+  padding: 20px 40px;
+  font-family: "PressStart2P", monospace;
+  font-size: 16px;
+  background: #f2bb05;
+  color: #000;
+  border: 4px solid #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.play-button:hover {
+  background: #fff;
+  color: #000;
+  transform: scale(1.1);
+  box-shadow: 0 0 20px #f2bb05;
+}
+
+.play-button:active {
+  transform: scale(0.95);
+}
+
+/* Game Page */
+.game-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.game-page.hidden {
+  display: none;
+}
+
+#game-info {
+  display: flex;
+  justify-content: space-between;
+  width: 700px;
+  color: #fff;
+  font-family: "PressStart2P", monospace;
+  font-size: 12px;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+#game-canvas {
+  outline: 2px solid white;
+  background: #000;
+}
+
+canvas {
+  font-family: "PressStart2P", monospace;
+}
+
+/* Win Screen */
+.win-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.win-screen.hidden {
+  display: none;
+}
+
+.contact-box {
+  background: #124e78;
+  border: 4px solid #f2bb05;
+  padding: 40px;
+  text-align: center;
+  color: #f0f0c9;
+  box-shadow: 0 0 40px #f2bb05;
+  animation: pixelBounce 0.3s ease-out;
+}
+
+@keyframes pixelBounce {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.contact-box h1 {
+  margin: 0 0 30px 0;
+  color: #f2bb05;
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+.contact-info p {
+  margin: 15px 0;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
