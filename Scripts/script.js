@@ -122,48 +122,32 @@ let enemies = [];
 let defensiveBlocks = [];
 const sceneBtn = document.getElementById("scene-btn");
 
-// Enemy formations for ENVO letters - ONLY 5 ENEMIES
+// Enemy formations for ENVO letters - 10-12 ENEMIES TOTAL
 function createENVOFormation() {
   enemies = [];
   gameState.enemiesDefeated = 0;
 
-  // Letter pixel patterns (7 rows x 5 cols)
+  // Letter pixel patterns - simplified (3 rows x 3 cols) for easier gameplay
   const patterns = {
     E: [
-      "11111",
-      "10000",
-      "11110",
-      "10000",
-      "10000",
-      "10000",
-      "11111"
+      "111",
+      "100",
+      "111"
     ],
     N: [
-      "10001",
-      "11001",
-      "10101",
-      "10011",
-      "10001",
-      "10001",
-      "10001"
+      "101",
+      "111",
+      "101"
     ],
     V: [
-      "10001",
-      "10001",
-      "10001",
-      "10001",
-      "01010",
-      "01010",
-      "00100"
+      "101",
+      "101",
+      "010"
     ],
     O: [
-      "01110",
-      "10001",
-      "10001",
-      "10001",
-      "10001",
-      "10001",
-      "01110"
+      "111",
+      "101",
+      "111"
     ]
   };
 
