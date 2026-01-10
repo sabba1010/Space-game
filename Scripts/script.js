@@ -136,7 +136,7 @@ let gameState = {
 let spaceHeld = false;
 let lastShotTime = 0;
 // Player auto-fire rate (lower = faster firing)
-const FIRE_RATE_MS = 280; // milliseconds between auto-shots (much slower)
+let FIRE_RATE_MS = 280; // milliseconds between auto-shots (much slower)
 
 // Player (slightly larger)
 const player = {
@@ -150,6 +150,23 @@ const player = {
   bulletSpeed: 6,
   maxLasers: 4
 };
+
+// Mobile-specific tuning: reduce speeds moderately for smooth, comfortable touch gameplay
+if (isMobile) {
+  try {
+    // Reduce player lateral speed to ~50%
+    player.dx = Math.max(2, player.dx * 0.5);
+    // Reduce bullet speed to ~50%
+    player.bulletSpeed = Math.max(2, player.bulletSpeed * 0.5);
+    // Reduce max simultaneous lasers for simpler touch control
+    player.maxLasers = Math.max(1, Math.round(player.maxLasers * 0.15));
+    // Increase fire interval by ~2x for less twitchy firing
+    FIRE_RATE_MS = Math.round(FIRE_RATE_MS * .2);
+  } catch (e) {
+    // If anything goes wrong, fall back to defaults
+    console.warn('Mobile tuning failed', e);
+  }
+}
 
 // Enemies array
 let enemies = [];
@@ -596,8 +613,15 @@ function updateLasers() {
 // Enemy base horizontal speed (keep moderate for classic pace)
 let enemy_vx = 1.2;
 
+// Apply mobile tuning to enemy horizontal speed
+if (isMobile) {
+  enemy_vx = enemy_vx * 0.5; // reduce to ~50%
+}
+
 // Difficulty scaling factor (increases slightly each direction flip)
 const ENEMY_SPEED_SCALE = 1.06;
+// Reduce enemy firing frequency on mobile to ~50%
+const ENEMY_FIRE_FACTOR = isMobile ? 0.5 : 1.0;
 
 // Update enemies
 function updateEnemies() {
@@ -635,7 +659,7 @@ function updateEnemies() {
     if (enemy.isAlive) {
       // increase firing probability as fewer enemies remain
       const aliveFactor = 1 + (gameState.enemiesDefeated / Math.max(1, gameState.totalEnemies)) * 3;
-      const chance = enemy.shotChance * aliveFactor;
+      const chance = enemy.shotChance * aliveFactor * ENEMY_FIRE_FACTOR;
       if (Math.random() < chance) {
         // Enemy fires slow vertical-only shot
         const sx = enemy.x + enemy.width / 2;
