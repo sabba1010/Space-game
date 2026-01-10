@@ -132,11 +132,40 @@ let gameState = {
   totalEnemies: 0
 };
 
+// ===== DYNAMIC SCALING BASED ON SCREEN SIZE =====
+// Calculate size multiplier based on viewport dimensions
+// Smaller screens get smaller UI elements; larger screens get standard sizes
+function getScreenScaleFactor() {
+  const width = Math.max(window.innerWidth, 320);
+  const height = Math.max(window.innerHeight, 500);
+  
+  // Base breakpoints for progressive scaling
+  const minWidth = 320;   // smallest mobile
+  const maxWidth = 1920;  // largest desktop
+  
+  // Clamp viewport width to range, then calculate normalized factor (0 to 1)
+  const normalizedWidth = Math.max(0, Math.min(1, (width - minWidth) / (maxWidth - minWidth)));
+  
+  // Size factor: small screens (0.4x), large screens (1.0x)
+  // Only affects visual element sizes, NOT game speed
+  const sizeFactor = 0.4 + normalizedWidth * 0.6;
+  
+  return { sizeFactor, width, height };
+}
+
+// Get current screen scale
+let screenScale = getScreenScaleFactor();
+
+// Update scale on window resize
+window.addEventListener('resize', () => {
+  screenScale = getScreenScaleFactor();
+});
+
 // Auto-fire controls
 let spaceHeld = false;
 let lastShotTime = 0;
 // Player auto-fire rate (lower = faster firing)
-let FIRE_RATE_MS = 280; // milliseconds between auto-shots (much slower)
+const FIRE_RATE_MS = 280; // milliseconds between auto-shots (much slower)
 
 // Player (slightly larger)
 const player = {
@@ -151,22 +180,18 @@ const player = {
   maxLasers: 4
 };
 
-// Mobile-specific tuning: reduce speeds moderately for smooth, comfortable touch gameplay
-if (isMobile) {
-  try {
-    // Reduce player lateral speed to ~50%
-    player.dx = Math.max(2, player.dx * 0.5);
-    // Reduce bullet speed to ~50%
-    player.bulletSpeed = Math.max(2, player.bulletSpeed * 0.5);
-    // Reduce max simultaneous lasers for simpler touch control
-    player.maxLasers = Math.max(1, Math.round(player.maxLasers * 0.15));
-    // Increase fire interval by ~2x for less twitchy firing
-    FIRE_RATE_MS = Math.round(FIRE_RATE_MS * .2);
-  } catch (e) {
-    // If anything goes wrong, fall back to defaults
-    console.warn('Mobile tuning failed', e);
-  }
+// Scale player size based on screen size
+function scalePlayerSize() {
+  player.width = Math.max(20, Math.round(40 * screenScale.sizeFactor));
+  player.height = Math.max(25, Math.round(50 * screenScale.sizeFactor));
 }
+
+scalePlayerSize();
+
+// Re-scale on window resize
+window.addEventListener('resize', () => {
+  scalePlayerSize();
+});
 
 // Enemies array
 let enemies = [];
@@ -209,7 +234,8 @@ function createENVOFormation() {
     { name: "O", color: "#d74e09" }
   ];
 
-  const cellSize = 42; // enemy square size (much larger for visibility)
+  // Scale enemy size based on screen size
+  const cellSize = Math.round(42 * screenScale.sizeFactor); // scale from 21 (small) to 42 (large)
   const spacing = 24; // increased gap between enemy pixels for more space
   // start lower on screen so enemies come from mid-area
   const startY = 140;
@@ -267,9 +293,10 @@ function createENVOFormation() {
 // Create defensive blocks with letters E, N, V, O
 function createDefensiveBlocks() {
   defensiveBlocks = [];
-  const blockWidth = 220;
-  const blockHeight = 90;
-  const gap = 40;
+  // Scale block sizes based on screen size
+  const blockWidth = Math.max(110, Math.round(220 * screenScale.sizeFactor));
+  const blockHeight = Math.max(45, Math.round(90 * screenScale.sizeFactor));
+  const gap = Math.max(20, Math.round(40 * screenScale.sizeFactor));
   const letters = ["E", "N", "V", "O"];
   const colors = ["#124e78", "#f0f0c9", "#f2bb05", "#d74e09"];
 
@@ -487,6 +514,7 @@ function updatePlayer(keys) {
   player.x += (targetX - player.x) * SMOOTH;
 
   // Optional: keyboard fallback (adds to smoothed position)
+  // Game speed stays constant on all devices
   if (keys["ArrowLeft"] || keys["a"]) {
     player.x = Math.max(0, player.x - player.dx);
   }
@@ -503,6 +531,7 @@ function playerShoot() {
     const sx = Math.round(player.x + player.width / 2 - lw / 2);
     const sy = Math.round(player.y);
 
+    // Game speed stays constant on all devices
     player.lasers.push({
       x: sx,
       y: sy,
@@ -613,15 +642,10 @@ function updateLasers() {
 // Enemy base horizontal speed (keep moderate for classic pace)
 let enemy_vx = 1.2;
 
-// Apply mobile tuning to enemy horizontal speed
-if (isMobile) {
-  enemy_vx = enemy_vx * 0.5; // reduce to ~50%
-}
-
 // Difficulty scaling factor (increases slightly each direction flip)
 const ENEMY_SPEED_SCALE = 1.06;
-// Reduce enemy firing frequency on mobile to ~50%
-const ENEMY_FIRE_FACTOR = isMobile ? 0.5 : 1.0;
+// Enemy firing frequency multiplier (same on all devices)
+const ENEMY_FIRE_FACTOR = 1.0;
 
 // Update enemies
 function updateEnemies() {
@@ -637,7 +661,7 @@ function updateEnemies() {
     }
   }
   
-    if (rightBound >= gameCanvas.width || leftBound <= 0) {
+  if (rightBound >= gameCanvas.width || leftBound <= 0) {
     // Reverse direction and slightly increase speed to ramp difficulty
     enemy_vx = -enemy_vx * ENEMY_SPEED_SCALE;
     for (let enemy of enemies) {
@@ -664,7 +688,7 @@ function updateEnemies() {
         // Enemy fires slow vertical-only shot
         const sx = enemy.x + enemy.width / 2;
         const sy = enemy.y + enemy.height;
-        const speed = 3.0; // slow vertical shots
+        const speed = 3.0; // slow vertical shots (constant speed)
         enemy.lasers.push({
           x: sx,
           y: sy,
@@ -702,6 +726,7 @@ function gameLoop() {
     updateEnemies();
     updateLasers();
     // Auto-fire when space is held
+    // Fire rate stays constant on all devices
     if (spaceHeld && Date.now() - lastShotTime >= FIRE_RATE_MS) {
       playerShoot();
       lastShotTime = Date.now();
@@ -807,6 +832,7 @@ document.addEventListener("keydown", (e) => {
     spaceHeld = true;
     // immediate shot on press
     if (gameState.isRunning && !gameState.isOver && !gameState.isWon) {
+      // Fire rate stays constant on all devices
       if (Date.now() - lastShotTime >= FIRE_RATE_MS) {
         playerShoot();
         lastShotTime = Date.now();
@@ -936,3 +962,34 @@ restartBtn.addEventListener("click", () => {
   createDefensiveBlocks();
   gameLoop();
 });
+
+// Auto-start game on mobile devices for touch-optimized experience
+if (isMobile) {
+  // Small timeout to allow layout and canvas sizing to settle
+  setTimeout(() => {
+    if (!gameState.isRunning) {
+      landingPage.classList.add("hidden");
+      gamePage.classList.remove("hidden");
+      
+      // Show mobile controls
+      if (mobileControls) mobileControls.classList.remove("hidden");
+      
+      // Initialize player position
+      player.x = gameCanvas.width / 2 - 20;
+      player.y = gameCanvas.height - 70;
+      
+      gameState.isRunning = true;
+      gameState.isOver = false;
+      gameState.isWon = false;
+      gameState.score = 0;
+      gameState.lives = 3;
+      
+      livesDisplay.textContent = `LIVES: 3`;
+      scoreDisplay.textContent = `SCORE: 0`;
+      
+      createENVOFormation();
+      createDefensiveBlocks();
+      gameLoop();
+    }
+  }, 300);
+}
