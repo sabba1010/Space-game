@@ -193,7 +193,6 @@ let gameState = {
   isScene: false,
   score: 0,
   lives: 3,
-  level: 1,
   enemiesDefeated: 0,
   totalEnemies: 0
 };
@@ -837,6 +836,11 @@ function gameLoop() {
     // Keep blocks at full opacity regardless of damage
     gameCtx.globalAlpha = 1;
     drawLetterBlock(block.x, block.y, block.width, block.height, block.letter, block.color, block.health);
+  }
+  
+  // Update score display (only during active gameplay)
+  if (!gameState.isOver && !gameState.isWon) {
+    scoreDisplay.textContent = `SCORE: ${gameState.score}`;
   }
   
   if (gameState.isOver) {
