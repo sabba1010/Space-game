@@ -268,27 +268,35 @@ function createENVOFormation() {
   enemies = [];
   gameState.enemiesDefeated = 0;
 
-  // Letter pixel patterns - simplified (3 rows x 3 cols) for easier gameplay
+  // Letter pixel patterns - 5x5 grids for clear ENVO readability
   const patterns = {
     E: [
-      "111",
-      "100",
-      "111"
+      "11111",
+      "10000",
+      "11111",
+      "10000",
+      "11111"
     ],
     N: [
-      "101",
-      "111",
-      "101"
+      "10001",
+      "11001",
+      "10101",
+      "10011",
+      "10001"
     ],
     V: [
-      "101",
-      "101",
-      "010"
+      "10001",
+      "10001",
+      "10001",
+      "01010",
+      "00100"
     ],
     O: [
-      "111",
-      "101",
-      "111"
+      "01110",
+      "10001",
+      "10001",
+      "10001",
+      "01110"
     ]
   };
 
@@ -299,9 +307,10 @@ function createENVOFormation() {
     { name: "O", color: "#d74e09" }
   ];
 
-  // Scale enemy size based on screen size
-  const cellSize = Math.round(42 * screenScale.sizeFactor); // scale from 21 (small) to 42 (large)
-  const spacing = 24; // increased gap between enemy pixels for more space
+  // Scale enemy size based on screen size (keeps pixel-art proportions)
+  const cellSize = Math.round(42 * screenScale.sizeFactor); // scale from ~21 (small) to ~42 (large)
+  // Spacing scales with screen size to maintain visual balance and prevent overlap
+  const spacing = Math.max(8, Math.round(16 * screenScale.sizeFactor));
   // start lower on screen so enemies come from mid-area
   const startY = 140;
   let enemyId = 0;
@@ -327,8 +336,8 @@ function createENVOFormation() {
       const rowStr = pattern[row];
       for (let col = 0; col < rowStr.length; col++) {
         if (rowStr[col] === "1") {
-          const ex = letterOffsetX + col * (cellSize + spacing);
-          const ey = startY + row * (cellSize + spacing);
+          const ex = Math.round(letterOffsetX + col * (cellSize + spacing));
+          const ey = Math.round(startY + row * (cellSize + spacing));
           enemies.push({
             id: enemyId++,
             x: ex,
@@ -342,8 +351,8 @@ function createENVOFormation() {
             letter: null,
             isAlive: true,
             lasers: [],
-            // base shot chance (higher -> more often they fire)
-            shotChance: 0.004,
+            // base shot chance (lower = less frequent firing for relaxed gameplay)
+            shotChance: 0.0015,
             isDead: false,
             deadTime: 0
           });
@@ -718,11 +727,11 @@ function updateLasers() {
 }
 
 // Global enemy speed variable
-// Enemy base horizontal speed (keep moderate for classic pace)
-let enemy_vx = 1.2;
+// Enemy base horizontal speed (slower, classic pace)
+let enemy_vx = isMobile ? 0.3 : 0.6;
 
-// Enemy firing frequency multiplier (same on all devices)
-const ENEMY_FIRE_FACTOR = 1.0;
+// Enemy firing frequency multiplier (lower = enemies fire less often)
+const ENEMY_FIRE_FACTOR = 0.6;
 
 // Update enemies
 function updateEnemies() {
@@ -749,8 +758,8 @@ function updateEnemies() {
     for (let enemy of enemies) {
       if (enemy.isAlive) {
         enemy.vx = -enemy.vx;
-        // Drop slower on mobile (half speed: 9 instead of 18)
-        enemy.y += isMobile ? 9 : 18;
+        // Smaller downward step for a slower, classic feel
+        enemy.y += isMobile ? 4 : 8;
       }
     }
   }
@@ -765,14 +774,13 @@ function updateEnemies() {
   
   for (let enemy of enemies) {
     if (enemy.isAlive) {
-      // increase firing probability as fewer enemies remain
-      const aliveFactor = 1 + (gameState.enemiesDefeated / Math.max(1, gameState.totalEnemies)) * 3;
-      const chance = enemy.shotChance * aliveFactor * ENEMY_FIRE_FACTOR;
+      // steady firing probability (no difficulty ramping over time)
+      const chance = enemy.shotChance * ENEMY_FIRE_FACTOR;
       if (Math.random() < chance) {
         // Enemy fires slow vertical-only shot
         const sx = enemy.x + enemy.width / 2;
         const sy = enemy.y + enemy.height;
-        const speed = 3.0; // slow vertical shots (constant speed)
+        const speed = 2.0; // slower vertical shots for relaxed gameplay
         enemy.lasers.push({
           x: sx,
           y: sy,
