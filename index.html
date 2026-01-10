@@ -15,8 +15,7 @@
     <div id="landing-page" class="landing-page">
       <canvas id="logo-canvas"></canvas>
       <div class="button-group" style="position: relative; z-index: 10;">
-        <button id="play-btn" class="play-button">PLAY GAME</button>
-        <button id="scene-btn" class="scene-button">VIEW SCENE</button>
+        <div id="play-btn" class="start-text">Start Game</div>
       </div>
     </div>
 
@@ -37,15 +36,16 @@
     <div id="win-screen" class="win-screen hidden">
       <div class="contact-box">
         <h1>THANKS FOR PLAYING</h1>
-        <div class="contact-info">
-          <p>EMAIL: INFO@ENVO.COM</p>
-          <p>WEBSITE: WWW.ENVO.COM</p>
-          <p>PHONE: +1-555-0100</p>
+        <p style="color:#fff; margin-bottom:18px;">If you'd like to send a message, use the box below.</p>
+        <textarea id="contact-message" placeholder="Write a short message..." style="width:100%; height:90px; box-sizing:border-box; font-family:'PressStart2P';"></textarea>
+        <div style="display:flex; gap:12px; justify-content:center; margin-top:18px;">
+          <button id="send-contact" class="scene-button">Send</button>
+          <button id="restart-btn" class="play-button">PLAY AGAIN</button>
         </div>
-        <button id="restart-btn" class="play-button">PLAY AGAIN</button>
       </div>
     </div>
 
     <script type="text/javascript" src="Scripts/script.js"></script>
+    <footer class="site-footer">© 2026 Envo Group</footer>
   </body>
 </html>

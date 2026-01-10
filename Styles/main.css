@@ -34,6 +34,24 @@ body {
   background: #000;
 }
 
+/* Start Game text style (pixelated, white) */
+.start-text {
+  color: #fff;
+  font-family: "PressStart2P", monospace;
+  font-size: 36px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  user-select: none;
+  text-shadow: 0 0 6px rgba(255,255,255,0.85), 0 2px 0 rgba(0,0,0,0.6);
+}
+
+.start-text:hover {
+  transform: scale(1.03);
+}
+
 .landing-page.hidden {
   display: none;
 }
@@ -214,4 +232,24 @@ canvas {
   font-size: 14px;
   letter-spacing: 1px;
   line-height: 1.6;
+}
+
+/* Footer */
+.site-footer {
+  position: fixed;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-family: "PressStart2P", monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  z-index: 9999;
+  text-shadow: 0 0 6px rgba(255,255,255,0.8);
+  pointer-events: none;
+}
+
+/* Pixel-style defensive block base */
+.def-block {
+  image-rendering: pixelated;
 }

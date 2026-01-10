@@ -147,7 +147,7 @@ const player = {
   dx: 6,
   color: "#f0f0c9",
   lasers: [],
-  bulletSpeed: 42,
+  bulletSpeed: 6,
   maxLasers: 4
 };
 
@@ -275,18 +275,46 @@ function createDefensiveBlocks() {
 }
 
 // Draw pixelated letter on block
-function drawLetterBlock(x, y, width, height, letter, color) {
+function drawLetterBlock(x, y, width, height, letter, color, health) {
+  gameCtx.save();
+  // outer rounded base
   gameCtx.fillStyle = color;
-  gameCtx.strokeStyle = "#fff";
+  gameCtx.strokeStyle = "#111";
   gameCtx.lineWidth = 2;
-  gameCtx.fillRect(x, y, width, height);
-  gameCtx.strokeRect(x, y, width, height);
-  
+  roundRect(gameCtx, x, y, width, height, 10);
+  gameCtx.fill();
+  gameCtx.stroke();
+
+  // pixel grid overlay to simulate gradual breakdown
+  const cols = Math.max(6, Math.floor(width / 14));
+  const rows = Math.max(3, Math.floor(height / 14));
+  const cellW = Math.floor(width / cols);
+  const cellH = Math.floor(height / rows);
+
+  const healthRatio = Math.max(0, Math.min(1, (typeof health === 'number' ? health : 5) / 5));
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const seed = (Math.floor(x) * 73 + Math.floor(y) * 97 + r * 13 + c * 17) % 100;
+      const drawProb = seed / 100;
+      // draw fewer pixels when health is low
+      if (drawProb < healthRatio) {
+        const px = x + c * cellW + 1;
+        const py = y + r * cellH + 1;
+        // darker shade for inner pixels
+        gameCtx.fillStyle = shadeColor(color, -20 - Math.floor((1 - healthRatio) * 60));
+        gameCtx.fillRect(px, py, Math.max(4, cellW - 2), Math.max(4, cellH - 2));
+      }
+    }
+  }
+
+  // draw small letter label
   gameCtx.fillStyle = "#000";
-  gameCtx.font = "bold 48px 'Press Start 2P'";
+  gameCtx.font = "bold 18px 'Press Start 2P'";
   gameCtx.textAlign = "center";
   gameCtx.textBaseline = "middle";
   gameCtx.fillText(letter, x + width / 2, y + height / 2);
+  gameCtx.restore();
 }
 
 // Draw player
@@ -450,46 +478,19 @@ function updatePlayer(keys) {
   }
 }
 
-// Player shoot
+// Player shoot (vertical-only, slow)
 function playerShoot() {
   if (player.lasers.length < player.maxLasers) {
     const lw = 4;
     const lh = 12;
-    // Lock shot to a rounded center position for consistent accuracy
     const sx = Math.round(player.x + player.width / 2 - lw / 2);
     const sy = Math.round(player.y);
-
-    // slight aim-assist: nudge bullet horizontally toward nearest alive enemy
-    let assistVx = 0;
-    let best = null;
-    let bestDist = Infinity;
-    for (let e of enemies) {
-      if (!e.isAlive) continue;
-      // consider only enemies above the player
-      if (e.y + e.height >= player.y) continue;
-      const exCenter = e.x + e.width / 2;
-      const dx = exCenter - (sx + lw / 2);
-      const absdx = Math.abs(dx);
-      if (absdx < bestDist) {
-        bestDist = absdx;
-        best = { e, dx };
-      }
-    }
-
-    // Reduced accuracy: very weak aim-assist and random spread
-    if (best && bestDist < 160) {
-      assistVx = best.dx * 0.01; // much weaker correction
-    }
-    
-    // Add significant random inaccuracy to shots
-    const randomSpread = (Math.random() - 0.5) * 8;
-    assistVx += randomSpread;
 
     player.lasers.push({
       x: sx,
       y: sy,
       vy: -player.bulletSpeed,
-      vx: assistVx,
+      vx: 0,
       width: lw,
       height: lh
     });
@@ -503,6 +504,26 @@ function updateLasers() {
     player.lasers[i].x += player.lasers[i].vx || 0;
     player.lasers[i].y += player.lasers[i].vy;
     
+    // collision with defensive blocks (player shots)
+    let hitBlock = false;
+    for (let b = defensiveBlocks.length - 1; b >= 0; b--) {
+      const block = defensiveBlocks[b];
+      if (player.lasers[i] &&
+          player.lasers[i].x < block.x + block.width &&
+          player.lasers[i].x + player.lasers[i].width > block.x &&
+          player.lasers[i].y < block.y + block.height &&
+          player.lasers[i].y + player.lasers[i].height > block.y) {
+        block.health--;
+        if (block.health <= 0) {
+          defensiveBlocks.splice(b, 1);
+        }
+        player.lasers.splice(i, 1);
+        hitBlock = true;
+        break;
+      }
+    }
+    if (hitBlock) continue;
+
     for (let j = enemies.length - 1; j >= 0; j--) {
       const enemy = enemies[j];
       if (enemy.isAlive &&
@@ -572,8 +593,8 @@ function updateLasers() {
 }
 
 // Global enemy speed variable
-// Enemy base horizontal speed (higher -> faster movement)
-let enemy_vx = 2.2; // increased for harder gameplay
+// Enemy base horizontal speed (keep moderate for classic pace)
+let enemy_vx = 1.2;
 
 // Difficulty scaling factor (increases slightly each direction flip)
 const ENEMY_SPEED_SCALE = 1.06;
@@ -616,23 +637,15 @@ function updateEnemies() {
       const aliveFactor = 1 + (gameState.enemiesDefeated / Math.max(1, gameState.totalEnemies)) * 3;
       const chance = enemy.shotChance * aliveFactor;
       if (Math.random() < chance) {
-        // Aim at player: compute normalized direction
+        // Enemy fires slow vertical-only shot
         const sx = enemy.x + enemy.width / 2;
         const sy = enemy.y + enemy.height;
-        const tx = player.x + player.width / 2;
-        const ty = player.y + player.height / 2;
-        const dx = tx - sx;
-        const dy = ty - sy;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const speed = 4.5; // enemy bullet speed
-        const vx = (dx / dist) * speed;
-        const vy = (dy / dist) * speed;
-
+        const speed = 3.0; // slow vertical shots
         enemy.lasers.push({
           x: sx,
           y: sy,
-          vx: vx,
-          vy: vy,
+          vx: 0,
+          vy: speed,
           width: 4,
           height: 12
         });
@@ -686,7 +699,7 @@ function gameLoop() {
   for (let block of defensiveBlocks) {
     // Keep blocks at full opacity regardless of damage
     gameCtx.globalAlpha = 1;
-    drawLetterBlock(block.x, block.y, block.width, block.height, block.letter, block.color);
+    drawLetterBlock(block.x, block.y, block.width, block.height, block.letter, block.color, block.health);
   }
   
   if (gameState.isOver) {
@@ -696,6 +709,8 @@ function gameLoop() {
     gameCtx.font = "bold 40px 'Press Start 2P'";
     gameCtx.textAlign = "center";
     gameCtx.fillText("GAME OVER", gameCanvas.width / 2, gameCanvas.height / 2);
+    gameCtx.font = "20px 'Press Start 2P'";
+    gameCtx.fillText("Play again?", gameCanvas.width / 2, gameCanvas.height / 2 + 48);
   }
   
   requestAnimationFrame(gameLoop);
@@ -705,6 +720,58 @@ function gameLoop() {
 function showWinScreen() {
   winScreen.classList.remove("hidden");
 }
+
+// Helper: shade hex color by percent (-100..100)
+function shadeColor(hex, percent) {
+  try {
+    const c = hex.replace('#','');
+    const num = parseInt(c,16);
+    let r = (num >> 16) + percent;
+    let g = ((num >> 8) & 0x00FF) + percent;
+    let b = (num & 0x0000FF) + percent;
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return '#' + ( (r<<16) | (g<<8) | b ).toString(16).padStart(6,'0');
+  } catch (e) {
+    return hex;
+  }
+}
+
+// Restart game helper
+function restartGame() {
+  // Reset state
+  gameState.isOver = false;
+  gameState.isWon = false;
+  gameState.score = 0;
+  gameState.lives = 3;
+  livesDisplay.textContent = `LIVES: ${gameState.lives}`;
+  scoreDisplay.textContent = `SCORE: ${gameState.score}`;
+  createENVOFormation();
+  createDefensiveBlocks();
+  winScreen.classList.add('hidden');
+  if (!gameState.isRunning) gameState.isRunning = true;
+  gameLoop();
+}
+
+// Canvas click to restart when game over
+gameCanvas.addEventListener('click', () => {
+  if (gameState.isOver) {
+    restartGame();
+  }
+});
+
+// Send contact message handler (no external links)
+const sendContactBtn = document.getElementById('send-contact');
+if (sendContactBtn) sendContactBtn.addEventListener('click', () => {
+  const msg = document.getElementById('contact-message');
+  if (msg) {
+    // locally acknowledge message
+    alert('Message received. Thank you!');
+    msg.value = '';
+    winScreen.classList.add('hidden');
+  }
+});
 
 // Keyboard handling
 const keysPressed = {};
@@ -774,6 +841,8 @@ playBtn.addEventListener("click", () => {
   createDefensiveBlocks();
   gameLoop();
 });
+
+if (restartBtn) restartBtn.addEventListener('click', () => { restartGame(); });
 
 // Scene preview: create a small set of anime UFOs
 function createAnimeUFOPreview(count = 5) {
