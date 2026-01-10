@@ -728,7 +728,7 @@ function updateLasers() {
 
 // Global enemy speed variable
 // Enemy base horizontal speed (slower, classic pace)
-let enemy_vx = isMobile ? 0.3 : 0.6;
+let enemy_vx = isMobile ? 0.16 : 0.6;     // মোবাইলে অনেক ধীর
 
 // Enemy firing frequency multiplier (lower = enemies fire less often)
 const ENEMY_FIRE_FACTOR = 0.6;
@@ -759,7 +759,7 @@ function updateEnemies() {
       if (enemy.isAlive) {
         enemy.vx = -enemy.vx;
         // Smaller downward step for a slower, classic feel
-        enemy.y += isMobile ? 4 : 8;
+        enemy.y += isMobile ? .1 : .1;
       }
     }
   }
