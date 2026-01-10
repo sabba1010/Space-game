@@ -655,7 +655,7 @@ function updateLasers() {
         enemy.isDead = true;
         enemy.deadTime = 0;
         gameState.enemiesDefeated++;
-        gameState.score += 100;
+        gameState.score += 10;
         
         // Play enemy killed sound
         playEnemyKilledSound();
@@ -721,8 +721,6 @@ function updateLasers() {
 // Enemy base horizontal speed (keep moderate for classic pace)
 let enemy_vx = 1.2;
 
-// Difficulty scaling factor (increases slightly each direction flip)
-const ENEMY_SPEED_SCALE = 1.06;
 // Enemy firing frequency multiplier (same on all devices)
 const ENEMY_FIRE_FACTOR = 1.0;
 
@@ -746,11 +744,11 @@ function updateEnemies() {
   }
   
   if (rightBound >= gameCanvas.width || leftBound <= 0) {
-    // Reverse direction and slightly increase speed to ramp difficulty
-    enemy_vx = -enemy_vx * ENEMY_SPEED_SCALE;
+    // Reverse direction (constant speed, no difficulty scaling)
+    enemy_vx = -enemy_vx;
     for (let enemy of enemies) {
       if (enemy.isAlive) {
-        enemy.vx = -enemy.vx * ENEMY_SPEED_SCALE;
+        enemy.vx = -enemy.vx;
         // Drop slower on mobile (half speed: 9 instead of 18)
         enemy.y += isMobile ? 9 : 18;
       }
