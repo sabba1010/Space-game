@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let logoH = 80;
 
   // Position and velocity
-  const speed = 300; // pixels per second
+  const speed = 150; // pixels per second (half speed)
   let x = 50;
   let y = 50;
   // Start with a diagonal velocity

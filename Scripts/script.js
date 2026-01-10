@@ -679,7 +679,8 @@ function updateEnemies() {
     for (let enemy of enemies) {
       if (enemy.isAlive) {
         enemy.vx = -enemy.vx * ENEMY_SPEED_SCALE;
-        enemy.y += 18; // drop a bit more each pass
+        // Drop slower on mobile (half speed: 9 instead of 18)
+        enemy.y += isMobile ? 9 : 18;
       }
     }
   }
