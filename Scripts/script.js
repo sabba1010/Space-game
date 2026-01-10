@@ -11,7 +11,8 @@ const mobileControls = document.getElementById("mobile-controls");
 
 // Detect if mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
+const DROP_MOBILE = 1.0;   // mobile-এ খুব ধীর (তুমি চাইছিলে)
+const DROP_PC     = 8.0;   // PC-তে দ্রুত/স্বাভাবিক
 /* ===== SOUND SYSTEM ===== */
 const sounds = {
   shoot: new Audio('/sounds/shoot.wav'),
@@ -747,19 +748,17 @@ function updateEnemies() {
     }
   }
   
-  // Play invader movement sound periodically
   if (enemies.some(e => e.isAlive)) {
     playInvaderMoveSound();
   }
   
   if (rightBound >= gameCanvas.width || leftBound <= 0) {
-    // Reverse direction (constant speed, no difficulty scaling)
     enemy_vx = -enemy_vx;
+    
     for (let enemy of enemies) {
       if (enemy.isAlive) {
         enemy.vx = -enemy.vx;
-        // Smaller downward step for a slower, classic feel
-      enemy.y += isMobile ? 1.2 : .1;   // Mobile: 1.2 (ধীর), PC: 6.0 (ভালো গতি)
+        enemy.y += isMobile ? DROP_MOBILE : DROP_PC;
       }
     }
   }
@@ -768,24 +767,21 @@ function updateEnemies() {
     if (enemy.isAlive && enemy.y + enemy.height >= player.y) {
       gameState.isOver = true;
       gameState.lives = 0;
-      playExplosionSound(); // Play explosion when game over
+      playExplosionSound();
     }
   }
   
   for (let enemy of enemies) {
     if (enemy.isAlive) {
-      // steady firing probability (no difficulty ramping over time)
       const chance = enemy.shotChance * ENEMY_FIRE_FACTOR;
       if (Math.random() < chance) {
-        // Enemy fires slow vertical-only shot
         const sx = enemy.x + enemy.width / 2;
         const sy = enemy.y + enemy.height;
-        const speed = 2.0; // slower vertical shots for relaxed gameplay
         enemy.lasers.push({
           x: sx,
           y: sy,
           vx: 0,
-          vy: speed,
+          vy: 2.0,
           width: 4,
           height: 12
         });
