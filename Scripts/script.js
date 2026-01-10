@@ -11,8 +11,8 @@ const mobileControls = document.getElementById("mobile-controls");
 
 // Detect if mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-const DROP_MOBILE = 1.0;   // mobile-এ খুব ধীর (তুমি চাইছিলে)
-const DROP_PC     = 8.0;   // PC-তে দ্রুত/স্বাভাবিক
+const DROP_MOBILE = .1;   // mobile-এ খুব ধীর (তুমি চাইছিলে)
+const DROP_PC     = 8;   // PC-তে দ্রুত/স্বাভাবিক
 /* ===== SOUND SYSTEM ===== */
 const sounds = {
   shoot: new Audio('/sounds/shoot.wav'),
@@ -757,8 +757,8 @@ function updateEnemies() {
     
     for (let enemy of enemies) {
       if (enemy.isAlive) {
-        enemy.vx = -enemy.vx;
-        enemy.y += isMobile ? DROP_MOBILE : DROP_PC;
+        enemy.vx = -enemy.vx;                    // ← left-right direction reverse ঠিক
+        enemy.y += isMobile ? DROP_MOBILE : DROP_PC;  // ← mobile/PC আলাদা down speed
       }
     }
   }
@@ -796,7 +796,8 @@ function updateEnemies() {
     }
   }
 }
-
+console.log("Device:", isMobile ? "Mobile" : "PC");
+console.log("Drop speed used:", isMobile ? DROP_MOBILE : DROP_PC);
 // Clear canvas
 function clearCanvas() {
   gameCtx.fillStyle = "#000";
