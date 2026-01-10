@@ -12,6 +12,65 @@ const mobileControls = document.getElementById("mobile-controls");
 // Detect if mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+/* ===== SOUND SYSTEM ===== */
+const sounds = {
+  shoot: new Audio('/sounds/shoot.wav'),
+  explosion: new Audio('/sounds/explosion.wav'),
+  fastinvader1: new Audio('/sounds/fastinvader1.wav'),
+  fastinvader2: new Audio('/sounds/fastinvader2.wav'),
+  fastinvader3: new Audio('/sounds/fastinvader3.wav'),
+  fastinvader4: new Audio('/sounds/fastinvader4.wav'),
+  invaderhit1: new Audio('/sounds/invaderhit1.wav'),
+  invaderhit3: new Audio('/sounds/invaderhit3.wav'),
+  invaderkilled: new Audio('/sounds/invaderkilled.wav')
+};
+
+// Set volume to prevent clipping
+Object.values(sounds).forEach(sound => {
+  sound.volume = 0.5;
+});
+
+let lastInvaderMoveSound = 0;
+let currentInvaderSoundIdx = 0;
+
+// Play invader movement sound (cycle through 4 sounds)
+function playInvaderMoveSound() {
+  const now = Date.now();
+  if (now - lastInvaderMoveSound > 400) { // 400ms between sounds
+    const soundName = ['fastinvader1', 'fastinvader2', 'fastinvader3', 'fastinvader4'][currentInvaderSoundIdx];
+    const sound = sounds[soundName];
+    sound.currentTime = 0;
+    sound.play().catch(() => {}); // Ignore play errors
+    currentInvaderSoundIdx = (currentInvaderSoundIdx + 1) % 4;
+    lastInvaderMoveSound = now;
+  }
+}
+
+// Play shoot sound (prevent overlap)
+function playShootSound() {
+  sounds.shoot.currentTime = 0;
+  sounds.shoot.play().catch(() => {});
+}
+
+// Play enemy hit sound
+function playEnemyHitSound() {
+  const hitSound = Math.random() > 0.5 ? sounds.invaderhit1 : sounds.invaderhit3;
+  hitSound.currentTime = 0;
+  hitSound.play().catch(() => {});
+}
+
+// Play enemy killed sound
+function playEnemyKilledSound() {
+  sounds.invaderkilled.currentTime = 0;
+  sounds.invaderkilled.play().catch(() => {});
+}
+
+// Play explosion sound
+function playExplosionSound() {
+  sounds.explosion.currentTime = 0;
+  sounds.explosion.play().catch(() => {});
+}
+
 // Load DVD image for bouncing logo
 const dvdImage = new Image();
 dvdImage.src = "Images/dvd.png";
@@ -552,6 +611,9 @@ function playerShoot() {
       width: lw,
       height: lh
     });
+    
+    // Play shoot sound
+    playShootSound();
   }
 }
 
@@ -596,6 +658,9 @@ function updateLasers() {
         gameState.enemiesDefeated++;
         gameState.score += 100;
         
+        // Play enemy killed sound
+        playEnemyKilledSound();
+        
         player.lasers.splice(i, 1);
         break;
       }
@@ -620,6 +685,9 @@ function updateLasers() {
           l.y + l.height > player.y) {
         gameState.lives--;
         livesDisplay.textContent = `LIVES: ${gameState.lives}`;
+        
+        // Play explosion sound when player is hit
+        playExplosionSound();
 
         if (gameState.lives <= 0) {
           gameState.isOver = true;
@@ -673,6 +741,11 @@ function updateEnemies() {
     }
   }
   
+  // Play invader movement sound periodically
+  if (enemies.some(e => e.isAlive)) {
+    playInvaderMoveSound();
+  }
+  
   if (rightBound >= gameCanvas.width || leftBound <= 0) {
     // Reverse direction and slightly increase speed to ramp difficulty
     enemy_vx = -enemy_vx * ENEMY_SPEED_SCALE;
@@ -689,6 +762,7 @@ function updateEnemies() {
     if (enemy.isAlive && enemy.y + enemy.height >= player.y) {
       gameState.isOver = true;
       gameState.lives = 0;
+      playExplosionSound(); // Play explosion when game over
     }
   }
   
@@ -747,6 +821,7 @@ function gameLoop() {
     
     if (gameState.enemiesDefeated === gameState.totalEnemies) {
       gameState.isWon = true;
+      playExplosionSound(); // Play explosion when all enemies are defeated
       showWinScreen();
       return;
     }
