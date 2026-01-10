@@ -19,6 +19,13 @@ dvdImage.onload = () => {
   // Image loaded, ready to draw
 };
 
+// Load player sprite image
+const playerImage = new Image();
+playerImage.src = "Images/fire1.png";
+playerImage.onload = () => {
+  // Image loaded, ready to draw player
+};
+
 // Load enemy sprite image
 const enemyImage = new Image();
 enemyImage.src = "Images/enimy.png";
@@ -363,10 +370,15 @@ function drawLetterBlock(x, y, width, height, letter, color, health) {
 
 // Draw player
 function drawPlayer() {
-  gameCtx.fillStyle = player.color;
-  gameCtx.fillRect(player.x, player.y, player.width, player.height);
-  gameCtx.fillRect(player.x + 8, player.y + 4, player.width - 16, player.height - 16);
-  gameCtx.fillRect(player.x + 4, player.y + 28, player.width - 8, 18);
+  if (playerImage.complete && playerImage.naturalWidth > 0) {
+    gameCtx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+  } else {
+    // Fallback to geometric shape if image not loaded
+    gameCtx.fillStyle = player.color;
+    gameCtx.fillRect(player.x, player.y, player.width, player.height);
+    gameCtx.fillRect(player.x + 8, player.y + 4, player.width - 16, player.height - 16);
+    gameCtx.fillRect(player.x + 4, player.y + 28, player.width - 8, 18);
+  }
 }
 
 // Draw enemy
