@@ -788,6 +788,7 @@ function updateEnemies() {
       }
     }
     
+    
     if (enemy.isDead) {
       enemy.deadTime++;
       if (enemy.deadTime > 20) {
