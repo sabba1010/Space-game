@@ -41,12 +41,12 @@ npm install
 npm start
 ```
 
-The server will start on `http://localhost:3000`
+The server will start on `https://server-ecru-eight-91.vercel.app`
 
 ### 5. Test the Setup
 You can test the email functionality with:
 ```bash
-curl -X POST http://localhost:3000/api/test-email
+curl -X POST https://server-ecru-eight-91.vercel.app/api/test-email
 ```
 
 ## How It Works
@@ -85,7 +85,7 @@ The email includes:
 
 For production use:
 1. Deploy the Node.js server to a hosting service (Heroku, AWS, Azure, etc.)
-2. Update the API endpoint in `script.js` from `http://localhost:3000` to your production URL
+2. Update the API endpoint in `script.js` from `https://server-ecru-eight-91.vercel.app` to your production URL
 3. Use environment-specific configuration for email credentials
 4. Set `NODE_ENV=production` in your `.env` file
 5. Consider adding rate limiting and input validation

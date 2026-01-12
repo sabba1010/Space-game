@@ -916,7 +916,7 @@ if (sendContactBtn) sendContactBtn.addEventListener('click', async () => {
       sendContactBtn.textContent = 'Sending...';
 
       // Send to backend server
-      const response = await fetch('http://localhost:3000/api/contact', {
+      const response = await fetch('https://server-ecru-eight-91.vercel.app/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -951,7 +951,7 @@ if (sendContactBtn) sendContactBtn.addEventListener('click', async () => {
       }
     } catch (error) {
       console.error('Contact form error:', error);
-      alert('Unable to send message. Make sure the server is running on http://localhost:3000');
+      alert('Unable to send message. Make sure the server is running on https://server-ecru-eight-91.vercel.app');
     } finally {
       sendContactBtn.disabled = false;
       sendContactBtn.textContent = 'Send';
