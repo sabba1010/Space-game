@@ -6,7 +6,7 @@ backgroundCanvas.height = window.screen.height;
 
 let backgroundContext = backgroundCanvas.getContext("2d");
 
-//draw "Space Invaders" text. to be slightly responsive, move the text to a different location depending on screen size
+//draw "envo game" text. to be slightly responsive, move the text to a different location depending on screen size
 let drawText = function() {
   backgroundContext.font = "25px 'Press Start 2P', cursive";
   backgroundContext.fillStyle = "white";

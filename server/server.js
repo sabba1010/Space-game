@@ -26,8 +26,8 @@ app.post('/api/test-email', async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: process.env.EMAIL_TO,
-      subject: 'Test Email - Space Invaders',
-      html: '<h1>Test Email</h1><p>This is a test email from the Space Invaders server.</p>'
+      subject: 'Test Email - envo game',
+      html: '<h1>Test Email</h1><p>This is a test email from the envo game server.</p>'
     };
 
     await transporter.sendMail(mailOptions);
@@ -65,7 +65,7 @@ app.post('/api/contact', async (req, res) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎮 Space Invaders - Player Message</h1>
+              <h1>🎮 Envo game - Player Message</h1>
             </div>
             <div class="content">
               <p>A player has sent you a message after completing the game!</p>
@@ -84,7 +84,7 @@ app.post('/api/contact', async (req, res) => {
               ` : ''}
 
               <div class="footer">
-                <p>This is an automated email from the Space Invaders game server.</p>
+                <p>This is an automated email from the envo game game server.</p>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ app.post('/api/contact', async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: process.env.EMAIL_TO,
-      subject: '🎮 New Message from Space Invaders Player',
+      subject: '🎮 New Message from envo game Player',
       html: htmlContent,
       text: `Player Message: ${message}`
     };

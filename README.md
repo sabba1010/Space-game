@@ -1,9 +1,9 @@
-# Space Invaders
+# envo game
 
-![Logo](https://i.ytimg.com/vi/k9oyDTR0EwQ/maxresdefault.jpg "Space Invaders")
+![Logo](https://i.ytimg.com/vi/k9oyDTR0EwQ/maxresdefault.jpg "envo game")
 
 ## Rules of the Game
-Space Invaders is the classic single-player arcade game introduced in 1978. The objective of my version is to make it through 3 levels of increasing difficulty while avoiding getting hit by enemy bullets and preventing the enemies from reaching the bottom of the screen. Difficulty between levels increases by having enemies become faster and take more hits in order to die.
+envo game is the classic single-player arcade game introduced in 1978. The objective of my version is to make it through 3 levels of increasing difficulty while avoiding getting hit by enemy bullets and preventing the enemies from reaching the bottom of the screen. Difficulty between levels increases by having enemies become faster and take more hits in order to die.
 
 ## Controls
 Players use the left and right arrow keys to move their ship and the spacebar to shoot. When prompted, the player can press the Enter key to restart the game.
