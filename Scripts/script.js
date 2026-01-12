@@ -933,9 +933,19 @@ if (sendContactBtn) sendContactBtn.addEventListener('click', async () => {
       const result = await response.json();
 
       if (result.success) {
-        alert('Message sent successfully! Email notification will be sent to sabbahossain123@gmail.com');
+        Swal.fire({
+          title: '✉️ Message Sent!',
+          html: '<p>Your message has been sent successfully!</p>',
+          icon: 'success',
+          confirmButtonText: 'Thanks!',
+          background: '#1a1a2e',
+          color: '#fff',
+          confirmButtonColor: '#00d4ff'
+        });
         msg.value = '';
-        winScreen.classList.add('hidden');
+        setTimeout(() => {
+          winScreen.classList.add('hidden');
+        }, 1500);
       } else {
         alert('Error: ' + (result.error || 'Failed to send message'));
       }
