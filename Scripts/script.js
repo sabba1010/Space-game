@@ -906,15 +906,48 @@ gameCanvas.addEventListener('click', () => {
   }
 });
 
-// Send contact message handler (no external links)
+// Send contact message handler
 const sendContactBtn = document.getElementById('send-contact');
-if (sendContactBtn) sendContactBtn.addEventListener('click', () => {
+if (sendContactBtn) sendContactBtn.addEventListener('click', async () => {
   const msg = document.getElementById('contact-message');
-  if (msg) {
-    // locally acknowledge message
-    alert('Message received. Thank you!');
-    msg.value = '';
-    winScreen.classList.add('hidden');
+  if (msg && msg.value.trim() !== '') {
+    try {
+      sendContactBtn.disabled = true;
+      sendContactBtn.textContent = 'Sending...';
+
+      // Send to backend server
+      const response = await fetch('http://localhost:3000/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: msg.value.trim(),
+          playerInfo: {
+            finalScore: gameState.score,
+            timestamp: new Date().toISOString()
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Message sent successfully! Email notification will be sent to sabbahossain123@gmail.com');
+        msg.value = '';
+        winScreen.classList.add('hidden');
+      } else {
+        alert('Error: ' + (result.error || 'Failed to send message'));
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      alert('Unable to send message. Make sure the server is running on http://localhost:3000');
+    } finally {
+      sendContactBtn.disabled = false;
+      sendContactBtn.textContent = 'Send';
+    }
+  } else {
+    alert('Please enter a message before sending.');
   }
 });
 
