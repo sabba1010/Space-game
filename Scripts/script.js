@@ -929,6 +929,7 @@ if (sendContactBtn) sendContactBtn.addEventListener('click', async () => {
           }
         })
       });
+      
 
       const result = await response.json();
 
