@@ -929,13 +929,13 @@ if (sendContactBtn) sendContactBtn.addEventListener('click', async () => {
           }
         })
       });
-      
+
 
       const result = await response.json();
 
       if (result.success) {
         Swal.fire({
-          title: '✉️ Message Sent!',
+          title: '📠 Message Sent!',
           html: '<p>Your message has been sent successfully!</p>',
           icon: 'success',
           confirmButtonText: 'Thanks!',
