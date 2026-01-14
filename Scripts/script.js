@@ -727,9 +727,31 @@ function updateLasers() {
   }
 }
 
+// Game state variables - level tracking
+let gameLevel = 1;  // Current level/playthrough number
+
+// Enemy speed calculation based on level (classic arcade progression)
+function calculateEnemySpeed(level) {
+  // Round 1 slightly slower
+  const baseSpeedMobile = 0.14;
+  const baseSpeedPC = 0.9;
+
+  // 0.001% increase per round
+  const GROWTH_RATE = 1.00001;
+
+  const multiplier = Math.pow(GROWTH_RATE, level - 1);
+
+  return isMobile
+    ? baseSpeedMobile * multiplier
+    : baseSpeedPC * multiplier;
+}
+
+
+
 // Global enemy speed variable
-// Enemy base horizontal speed (slower, classic pace)
-let enemy_vx = isMobile ? 0.16 : 1.2;     // মোবাইলে অনেক ধীর
+// Enemy base horizontal speed (recalculated on game start based on level)
+let enemy_vx = calculateEnemySpeed(1);
+
 
 // Enemy firing frequency multiplier (lower = enemies fire less often)
 const ENEMY_FIRE_FACTOR = 0.6;
@@ -885,6 +907,12 @@ function shadeColor(hex, percent) {
 
 // Restart game helper
 function restartGame() {
+  // Increment level/playthrough counter
+  gameLevel++;
+  
+  // Recalculate enemy speed based on new level
+  enemy_vx = calculateEnemySpeed(gameLevel);
+  
   // Reset state
   gameState.isOver = false;
   gameState.isWon = false;
@@ -892,12 +920,21 @@ function restartGame() {
   gameState.lives = 3;
   livesDisplay.textContent = `LIVES: ${gameState.lives}`;
   scoreDisplay.textContent = `SCORE: ${gameState.score}`;
+
+  // Recreate enemies & blocks
   createENVOFormation();
   createDefensiveBlocks();
+
+  // 🔥 IMPORTANT: sync enemy vx after creation
+  for (let enemy of enemies) {
+    enemy.vx = enemy_vx;
+  }
+
   winScreen.classList.add('hidden');
   if (!gameState.isRunning) gameState.isRunning = true;
   gameLoop();
 }
+
 
 // Canvas click to restart when game over
 gameCanvas.addEventListener('click', () => {
@@ -1014,6 +1051,11 @@ playBtn.addEventListener("click", () => {
   landingPage.classList.add("hidden");
   gamePage.classList.remove("hidden");
   
+  // Reset level on fresh game start
+  gameLevel = 1;
+enemy_vx = calculateEnemySpeed(gameLevel);
+
+  
   // Initialize player position
   player.x = gameCanvas.width / 2 - 20;
   player.y = gameCanvas.height - 70;
@@ -1082,6 +1124,12 @@ if (sceneBtn) {
 
 // Restart button
 restartBtn.addEventListener("click", () => {
+  // Increment level/playthrough counter
+  gameLevel++;
+  
+  // Recalculate enemy speed based on new level
+  enemy_vx = calculateEnemySpeed(gameLevel);
+  
   winScreen.classList.add("hidden");
   gamePage.classList.remove("hidden");
   
@@ -1108,6 +1156,10 @@ if (isMobile) {
   // Small timeout to allow layout and canvas sizing to settle
   setTimeout(() => {
     if (!gameState.isRunning) {
+      // Reset level on fresh game start
+      gameLevel = 1;
+      enemy_vx = calculateEnemySpeed(1);
+      
       landingPage.classList.add("hidden");
       gamePage.classList.remove("hidden");
       
