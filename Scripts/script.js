@@ -93,6 +93,20 @@ enemyImage.onload = () => {
   // Image loaded, ready to draw enemies
 };
 
+// Load enemy sprite animation frame pairs (each pair = 2 frames)
+const enemySpritePairs = [
+  // Pair 0: frames A and B
+  [
+    (() => { const img = new Image(); img.src = "Images/enemy.9.png"; return img; })(),
+    (() => { const img = new Image(); img.src = "Images/enemy.10.png"; return img; })()
+  ],
+  // Pair 1: frames A and B
+  [
+    (() => { const img = new Image(); img.src = "Images/enemy.7.png"; return img; })(),
+    (() => { const img = new Image(); img.src = "Images/enemy.8.png"; return img; })()
+  ]
+];
+
 // Fullscreen logo canvas setup
 function resizeLogoCanvas() {
   logoCanvas.width = window.innerWidth;
@@ -346,6 +360,11 @@ function createENVOFormation() {
             width: cellSize,
             height: cellSize,
             vx: enemy_vx,
+            // Sprite animation properties - paired frames
+            spritePairIndex: (enemyId - 1) % 2, // Assign pair based on enemy ID (2 pairs total)
+            spriteFrameIndex: 0, // 0 or 1 for frame A or B
+            spriteFrameTimer: 0,
+            spriteFrameInterval: 800, // 0.8 seconds per frame alternation
             // render these formation enemies as small UFOs for style
             isUFO: true,
             color: color,
@@ -452,6 +471,16 @@ function drawPlayer() {
 // Draw enemy
 function drawEnemy(enemy) {
   if (enemy.isAlive && !enemy.isDead) {
+    // Use sprite animation frames (paired images)
+    if (enemySpritePairs && enemy.spritePairIndex >= 0 && enemy.spritePairIndex < enemySpritePairs.length) {
+      const pair = enemySpritePairs[enemy.spritePairIndex];
+      const frameImg = pair[enemy.spriteFrameIndex];
+      if (frameImg && frameImg.complete && frameImg.naturalWidth > 0) {
+        gameCtx.drawImage(frameImg, enemy.x, enemy.y, enemy.width, enemy.height);
+        return;
+      }
+    }
+    
     // Draw enemy sprite if loaded
     if (enemyImage.complete && enemyImage.naturalWidth > 0) {
       gameCtx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
@@ -736,14 +765,17 @@ function calculateEnemySpeed(level) {
   const baseSpeedMobile = 0.14;
   const baseSpeedPC = 0.9;
 
-  // 0.001% increase per round
-  const GROWTH_RATE = 1.00001;
+  // Gradual 2% increase per level (smooth progression like classic arcade)
+  const GROWTH_RATE = 1.02;
 
   const multiplier = Math.pow(GROWTH_RATE, level - 1);
-
-  return isMobile
+  const speed = isMobile
     ? baseSpeedMobile * multiplier
     : baseSpeedPC * multiplier;
+  
+  console.log(`Level ${level}: enemy_vx = ${speed.toFixed(4)} (multiplier: ${multiplier.toFixed(6)})`);
+  
+  return speed;
 }
 
 
@@ -810,6 +842,14 @@ function updateEnemies() {
       }
     }
     
+    // Update sprite animation frame (paired: 0 or 1)
+    if (enemy.isAlive && enemySpritePairs && enemy.spritePairIndex >= 0 && enemy.spritePairIndex < enemySpritePairs.length) {
+      enemy.spriteFrameTimer += 16.67; // ~60fps frame time in milliseconds
+      if (enemy.spriteFrameTimer >= enemy.spriteFrameInterval) {
+        enemy.spriteFrameTimer = 0;
+        enemy.spriteFrameIndex = (enemy.spriteFrameIndex + 1) % 2; // Alternate between 0 and 1
+      }
+    }
     
     if (enemy.isDead) {
       enemy.deadTime++;
