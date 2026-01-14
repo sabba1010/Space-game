@@ -190,6 +190,7 @@ const gameCanvas = document.getElementById("game-canvas");
 const gameCtx = gameCanvas.getContext("2d");
 const livesDisplay = document.getElementById("lives-display");
 const scoreDisplay = document.getElementById("score-display");
+const levelDisplay = document.getElementById("level-display");
 
 // Fullscreen canvas setup
 function resizeGameCanvas() {
@@ -826,8 +827,8 @@ function calculateEnemySpeed(level) {
   const baseSpeedMobile = 0.14;
   const baseSpeedPC = 0.9;
 
-  // Gradual 2% increase per level (smooth progression like classic arcade)
-  const GROWTH_RATE = 1.02;
+  // 15% increase per level (noticeable difficulty jump)
+  const GROWTH_RATE = 1.15;
 
   const multiplier = Math.pow(GROWTH_RATE, level - 1);
   const speed = isMobile
@@ -1031,6 +1032,7 @@ function restartGame() {
   gameState.lives = 3;
   livesDisplay.textContent = `LIVES: ${gameState.lives}`;
   scoreDisplay.textContent = `SCORE: ${gameState.score}`;
+  levelDisplay.textContent = `LEVEL: ${gameLevel}`;
 
   // Recreate enemies & blocks
   createENVOFormation();
