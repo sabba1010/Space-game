@@ -414,87 +414,151 @@ function createENVOFormation() {
   gameState.totalEnemies = enemies.length;
 }
 
-// Create defensive blocks with letters E, N, V, O
+// Letter shape patterns as 2D binary grids (1=pixel exists, 0=empty)
+// Letter shape patterns - BOLD & THICK (Uniform 13x13 size)
+// Same overall size but with much thicker pixel density for a bold look
+// Premium Pixel Art Patterns - 11x13 Grid
+// 'N' is now perfectly balanced with a thick diagonal stroke
+// Premium Pixel Art Patterns - Fixed 11x11 Balanced Grid
+const LETTER_PATTERNS = {
+  E: [
+    "11111111111", // Row 0
+    "11111111111", // Row 1
+    "11100000000", // Row 2
+    "11100000000", // Row 3
+    "11111111100", // Row 4 (Perfect Mid)
+    "11111111100", // Row 5
+    "11100000000", // Row 6
+    "11100000000", // Row 7
+    "11100000000", // Row 8
+    "11111111111", // Row 9
+    "11111111111"  // Row 10
+  ],
+  N: [
+    "11110000111", // Row 0
+    "11111000111", // Row 1
+    "11111100111", // Row 2
+    "11101110111", // Row 3
+    "11101110111", // Row 4
+    "11100111111", // Row 5 (Balanced Diagonal)
+    "11100111111", // Row 6
+    "11100011111", // Row 7
+    "11100001111", // Row 8
+    "11100000111", // Row 9
+    "11100000111"  // Row 10
+  ],
+  V: [
+    "11100000111", // Row 0
+    "11100000111", // Row 1
+    "11100000111", // Row 2
+    "01110001110", // Row 3
+    "01110001110", // Row 4
+    "00111011100", // Row 5
+    "00111011100", // Row 6
+    "00011111000", // Row 7
+    "00011111000", // Row 8
+    "00001110000", // Row 9
+    "00001110000"  // Row 10
+  ],
+  O: [
+    "00111111100", // Row 0
+    "01111111110", // Row 1
+    "11100000111", // Row 2
+    "11100000111", // Row 3
+    "11100000111", // Row 4
+    "11100000111", // Row 5
+    "11100000111", // Row 6
+    "11100000111", // Row 7
+    "11100000111", // Row 8
+    "01111111110", // Row 9
+    "00111111100"  // Row 10
+  ]
+};
+// Create defensive blocks shaped like letters E, N, V, O
 function createDefensiveBlocks() {
   defensiveBlocks = [];
-  // Scale block sizes based on screen size
-  const blockWidth = Math.max(110, Math.round(220 * screenScale.sizeFactor));
-  const blockHeight = Math.max(45, Math.round(90 * screenScale.sizeFactor));
-  const gap = Math.max(20, Math.round(40 * screenScale.sizeFactor));
-  const letters = ["E", "N", "V", "O"];
-  const colors = ["#124e78", "#f0f0c9", "#f2bb05", "#d74e09"];
+  const colors = {
+    E: "#124e78",
+    N: "#f0f0c9",
+    V: "#f2bb05",
+    O: "#d74e09"
+  };
 
-  const totalWidth = (blockWidth * letters.length) + (gap * (letters.length - 1));
+  const pixelSize = Math.max(8, Math.round(16 * screenScale.sizeFactor)); // Size of each pixel block
+  const gap = Math.max(30, Math.round(60 * screenScale.sizeFactor));
+  
+  // Position shields near bottom of screen
+  const startY = gameCanvas.height - 180;
+  
+  // Calculate starting X position (center all shields)
+  let totalWidth = 0;
+  Object.keys(LETTER_PATTERNS).forEach((letter, idx) => {
+    const pattern = LETTER_PATTERNS[letter];
+    const patternWidth = pattern[0].length * pixelSize;
+    totalWidth += patternWidth;
+    if (idx < 3) totalWidth += gap; // Add gap between shields
+  });
   let startX = (gameCanvas.width - totalWidth) / 2;
-  // positioned slightly higher to accommodate larger blocks
-  const y = gameCanvas.height - 200;
 
-  for (let i = 0; i < letters.length; i++) {
-    // Create a block composed of many small cells so it can "chip away"
-    const bx = startX + i * (blockWidth + gap);
-    const by = y;
-    const cols = Math.max(6, Math.floor(blockWidth / 14));
-    const rows = Math.max(3, Math.floor(blockHeight / 14));
-    const cellW = Math.floor(blockWidth / cols);
-    const cellH = Math.floor(blockHeight / rows);
+  // Create each letter shield
+  Object.keys(LETTER_PATTERNS).forEach(letter => {
+    const pattern = LETTER_PATTERNS[letter];
+    const color = colors[letter];
     const cells = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        cells.push({
-          x: bx + c * cellW,
-          y: by + r * cellH,
-          w: cellW,
-          h: cellH,
-          alive: true
-        });
+
+    // Create pixels from the pattern
+    for (let row = 0; row < pattern.length; row++) {
+      for (let col = 0; col < pattern[row].length; col++) {
+        if (pattern[row][col] === "1") {
+          cells.push({
+            x: startX + col * pixelSize,
+            y: startY + row * pixelSize,
+            w: pixelSize,
+            h: pixelSize,
+            alive: true,
+            row: row,
+            col: col
+          });
+        }
       }
     }
 
     defensiveBlocks.push({
-      x: bx,
-      y: by,
-      width: blockWidth,
-      height: blockHeight,
-      letter: letters[i],
-      color: colors[i],
-      cells: cells
+      x: startX,
+      y: startY,
+      letter: letter,
+      color: color,
+      cells: cells,
+      pixelSize: pixelSize
     });
-  }
+
+    // Move X position for next letter
+    const patternWidth = pattern[0].length * pixelSize;
+    startX += patternWidth + gap;
+  });
 }
 
-// Draw pixelated letter on block
+// Draw letter-shaped shield made of pixel blocks
 function drawLetterBlock(block) {
-  const x = block.x;
-  const y = block.y;
-  const width = block.width;
-  const height = block.height;
-  const letter = block.letter;
-  const color = block.color;
-
-  gameCtx.save();
-  // outer rounded base
-  gameCtx.fillStyle = color;
-  gameCtx.strokeStyle = "#111";
-  gameCtx.lineWidth = 2;
-  roundRect(gameCtx, x, y, width, height, 10);
-  gameCtx.fill();
-  gameCtx.stroke();
-
-  // Draw individual cells that are still alive
+  // Draw only the alive pixels that form the letter shape
   for (let cell of block.cells) {
     if (!cell.alive) continue;
-    const shade = shadeColor(color, -10);
-    gameCtx.fillStyle = shade;
-    gameCtx.fillRect(cell.x + 1, cell.y + 1, Math.max(4, cell.w - 2), Math.max(4, cell.h - 2));
-  }
 
-  // draw small letter label
-  gameCtx.fillStyle = "#000";
-  gameCtx.font = "bold 18px 'Press Start 2P'";
-  gameCtx.textAlign = "center";
-  gameCtx.textBaseline = "middle";
-  gameCtx.fillText(letter, x + width / 2, y + height / 2);
-  gameCtx.restore();
+    // Calculate damage-based shading
+    const liveCellCount = block.cells.filter(c => c.alive).length;
+    const totalCellCount = block.cells.length;
+    const integrityPercent = liveCellCount / totalCellCount;
+    
+    // Color gets darker as shield takes damage
+    const shade = shadeColor(block.color, -15 - Math.floor((1 - integrityPercent) * 40));
+    gameCtx.fillStyle = shade;
+    gameCtx.strokeStyle = shadeColor(block.color, -30);
+    gameCtx.lineWidth = 0.5;
+
+    // Draw the pixel block
+    gameCtx.fillRect(cell.x + 0.5, cell.y + 0.5, Math.max(2, cell.w - 1), Math.max(2, cell.h - 1));
+    gameCtx.strokeRect(cell.x + 0.5, cell.y + 0.5, Math.max(2, cell.w - 1), Math.max(2, cell.h - 1));
+  }
 }
 
 // Draw player
@@ -891,15 +955,15 @@ function updateEnemies() {
     if (enemy.isAlive) {
       const chance = enemy.shotChance * ENEMY_FIRE_FACTOR;
       if (Math.random() < chance) {
-        // Only allow the front-most enemy in a column to fire
+        // Only allow the bottom-most enemy in each column to fire
         const centerX = enemy.x + enemy.width / 2;
         const horizontalTolerance = Math.max(enemy.width * 0.75, 8);
-        const isFront = !enemies.some(e2 => (
+        const isBottomMost = !enemies.some(e2 => (
           e2 !== enemy && e2.isAlive &&
           Math.abs((e2.x + e2.width / 2) - centerX) < horizontalTolerance &&
-          e2.y > enemy.y
+          e2.y < enemy.y  // Looking for enemies BELOW (higher y value = lower on screen)
         ));
-        if (isFront) {
+        if (isBottomMost) {
           const sx = enemy.x + enemy.width / 2;
           const sy = enemy.y + enemy.height;
           enemy.lasers.push({
