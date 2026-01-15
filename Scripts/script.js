@@ -953,7 +953,7 @@ let enemy_vx = calculateEnemySpeed(1);
 
 
 // Enemy firing frequency multiplier (lower = enemies fire less often)
-const ENEMY_FIRE_FACTOR = 0.6;
+const ENEMY_FIRE_FACTOR = 0.8;
 
 // Update enemies
 function updateEnemies() {
