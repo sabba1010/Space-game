@@ -488,7 +488,7 @@ function createDefensiveBlocks() {
   const gap = Math.max(30, Math.round(60 * screenScale.sizeFactor));
   
   // Position shields near bottom of screen
-  const startY = gameCanvas.height - 180;
+  const startY = gameCanvas.height - 280;
   
   // Calculate starting X position (center all shields)
   let totalWidth = 0;
