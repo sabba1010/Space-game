@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  // Images sequence: white -> grey -> black
-  const imgPaths = ['/Images/1.png', '/Images/2.png', '/Images/4.png'];
+  // Images sequence: white -> black
+  const imgPaths = ['/Images/1.png', '/Images/4.png'];
   const imgs = imgPaths.map(p => {
     const im = new Image();
     im.src = p;
