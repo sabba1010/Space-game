@@ -4,8 +4,8 @@
   "description": "Backend server for envo game game",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node init && node server.js",
+    "dev": "node init && node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
